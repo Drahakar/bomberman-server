@@ -1,4 +1,5 @@
 import logging
+import traceback
 from player import Player
 from game import Game
 import asyncio
@@ -33,7 +34,6 @@ class Server:
     @asyncio.coroutine
     def request_handler(self, websocket, path):
         self.clients.add(websocket)
-
         while True:
             try:
                 start = time()
@@ -41,13 +41,14 @@ class Server:
                 response_time = time() - start
                 logging.info("Client took {} to respond".format(time() - start))
                 logging.info("Message recieved: {}".format(msg))
-                logging.info("Connected clients: {}".format(len(self.clients)))
-                logging.info("Registered players: {}".format(self.registered_players))
                 # if self.time_handler(response_time, websocket):
                     # yield from websocket.send("WARNING: you're too slow")
                 # else:
                     # yield from self.message_handler(msg, websocket)
+                logging.debug("Client sent message: {}".format(msg))
                 yield from self.message_handler(msg, websocket)
+                logging.info("Connected clients: {}".format(len(self.clients)))
+                logging.info("Registered players: {}".format(self.registered_players))
             except ConnectionClosed as e:
                 self.clients.remove(websocket)
                 if websocket in self.registered_players:
@@ -63,6 +64,7 @@ class Server:
             message = json.loads(message)
             return self.types[message["type"]](message, websocket)
         except (ValueError, KeyError) as e:
+            logging.debug(traceback.print_exc())
             return websocket.send("Invalid request: {}".format(e))
 
     def register_player(self, message, websocket):
@@ -86,6 +88,6 @@ class Server:
             return websocket.send("You are not in a game")
         current_player = self.registered_players[websocket]
         current_game = self.player_game[websocket]
-        current_game.get_player_move(current_player, message["direction"])
-        current_game.tick()
+        current_game.get_player_move(current_player, (message["direction"], message["plant_bomb"]))
+        current_game.tick_handler()
         return websocket.send("{}\n{}".format(current_game.world_map.to_json(), current_game.world_map.to_ascii()))
