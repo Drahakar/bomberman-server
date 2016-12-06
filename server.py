@@ -5,6 +5,7 @@ import asyncio
 import websockets
 import json
 import uuid
+from time import time
 from websockets.exceptions import ConnectionClosed
 
 class Server:
@@ -13,11 +14,13 @@ class Server:
         self.port = listen_port
         self.clients = set()
         self.registered_players = {}
+        self.player_game = {}
         self.games = set()
         logging.basicConfig(format="%(asctime)s %(levelname)s  %(message)s", level=loglevel)
         self.types = {
             "register" : self.register_player,
-            "start_game" : self.start_game
+            "start_game" : self.start_game,
+            "move" : self.register_move,
         }
 
 
@@ -33,12 +36,18 @@ class Server:
 
         while True:
             try:
+                start = time()
                 msg = yield from websocket.recv()
+                response_time = time() - start
+                logging.info("Client took {} to respond".format(time() - start))
                 logging.info("Message recieved: {}".format(msg))
                 logging.info("Connected clients: {}".format(len(self.clients)))
                 logging.info("Registered players: {}".format(self.registered_players))
-                status, retmsg = self.message_handler(msg, websocket)
-                yield from websocket.send(retmsg)
+                # if self.time_handler(response_time, websocket):
+                    # yield from websocket.send("WARNING: you're too slow")
+                # else:
+                    # yield from self.message_handler(msg, websocket)
+                yield from self.message_handler(msg, websocket)
             except ConnectionClosed as e:
                 self.clients.remove(websocket)
                 if websocket in self.registered_players:
@@ -46,19 +55,37 @@ class Server:
                 logging.info("Removed connection. Current connections: {}".format(len(self.clients)))
                 break
 
+    def time_handler(self, response_time, websocket):
+        return response_time > 3 and websocket in self.player_game
+
     def message_handler(self, message, websocket):
         try: 
             message = json.loads(message)
             return self.types[message["type"]](message, websocket)
-        except ValueError as e:
-            return "error", "Invalid request: {}".format(e)
+        except (ValueError, KeyError) as e:
+            return websocket.send("Invalid request: {}".format(e))
 
     def register_player(self, message, websocket):
-        self.registered_players[websocket] = Player(message["name"])
-        return "success", "Player registered"
-
+        if websocket in self.registered_players:
+            return websocket.send("Player already registered")
+        else:
+            self.registered_players[websocket] = Player(message["name"])
+            return websocket.send("Player registered")
 
     def start_game(self, message, websocket):
-        game = Game([self.registered_players[websocket]], 3)
+        if websocket in self.player_game:
+            return websocket.send("Can't play two games at once")
+        game = Game([self.registered_players[websocket]], 0)
+        self.player_game[websocket] = game
         self.games.add(game)
-        return "success", "{}\n{}".format(game.to_json(), game.to_ascii())
+        game.start()
+        return websocket.send("{}\n{}".format(game.world_map.to_json(), game.world_map.to_ascii()))
+
+    def register_move(self, message, websocket):
+        if websocket not in self.player_game:
+            return websocket.send("You are not in a game")
+        current_player = self.registered_players[websocket]
+        current_game = self.player_game[websocket]
+        current_game.get_player_move(current_player, message["direction"])
+        current_game.tick()
+        return websocket.send("{}\n{}".format(current_game.world_map.to_json(), current_game.world_map.to_ascii()))
