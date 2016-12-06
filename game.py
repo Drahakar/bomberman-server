@@ -1,71 +1,43 @@
-import json
-from random import shuffle
 from player import Player
+from world_map import WorldMap
+from time import time
+from timer import Periodic
+import logging
+import utils
 
 class Game:
     def __init__(self, players, ais, width=11, height=11):
         self.players = players
         for i in range(ais):
             self.players.append(Player("Bot"))
-        self.width = width
-        self.height = height
-        for player, spawn_point in zip(self.players, self.gen_spawn_points()):
-            player.coordinate = spawn_point
-        self.walls = self.gen_walls()
+        self.ais = ais
+        self.world_map = WorldMap(width, height, players)
+        self.players = self.world_map.players
+        self.acquired_moves = {}
+        self.last_tick = None
+        self.ticker = Periodic(self.tick, 3)
 
-    def gen_spawn_points(self):
-        possible_spawns = [
-            (0,0),
-            (self.width - 1, 0),
-            (0, self.height - 1),
-            (self.width - 1, self.height - 1)
-            ]
-        shuffle(possible_spawns)
-        return possible_spawns
+    def start(self):
+        # self.ticker.start()
+        pass
 
-    def gen_walls(self):
-        ret = []
-        for x in range(1, self.width, 2):
-            for y in range(1, self.height, 2):
-                ret.append(y * self.width + x)
-        return ret
+    def tick(self, force=False):
+        if not force:
+            if len(self.acquired_moves) == len(self.players) - self.ais: #temporary ai fix
+                self.update_positions()
+        else:
+            if not time() - self.last_tick > 3:
+                return
+            self.update_positions()
+        self.last_tick = time()
 
-    def to_json(self):
-        ret = {}
-        ret["map"] = {}
-        ret["map"]["width"] = self.width
-        ret["map"]["height"] = self.height
-        ret["map"]["walls"] = self.walls
-        ret["players"] = []
+    def update_positions(self):
         for player in self.players:
-            ret["players"].append({
-                "id" : player.p_id,
-                "position" : player.coordinate,
-                "alive" : player.alive
-                }
-            )
-        return json.dumps(ret)
-            
-    def pos_to_coord(self, pos):
-        y = pos // self.width
-        x = pos % self.width
-        return x, y
+            direction = self.acquired_moves[player]
+            coord_offset = utils.direction_as_movement_delta(direction)
+            dest_coord = player.coord + coord_offset
+            if self.world_map.can_move_to(dest_coord, coord_offset):
+                player.coord = dest_coord
 
-    def to_ascii(self):
-        asc_map = [[" " for x in range(self.width)] for y in range(self.height)] 
-        # Walls
-        for w in self.walls:
-            w_x, w_y = self.pos_to_coord(w)
-            asc_map[w_y][w_x] = "w"
-        # Players
-        for i, p in enumerate(self.players):
-            p_x, p_y = p.coordinate
-            asc_map[p_y][p_x] = str(i)
-        # Frame
-        for row in asc_map:
-            row.insert(0, "|")
-            row.append("|")
-        asc_map.insert(0, ["-"] * (self.width + 2))
-        asc_map.append(["-"] * (self.width + 2))
-        return '\n'.join([''.join(row) for row in asc_map])
-
+    def get_player_move(self, player, move):
+        self.acquired_moves[player] = move
