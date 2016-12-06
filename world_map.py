@@ -1,5 +1,7 @@
 from coordinate import Coordinate
 from random import shuffle
+from bomb import Bomb
+from fire import Fire
 import json
 import logging
 
@@ -12,6 +14,9 @@ class WorldMap:
         for player, spawn_point in zip(self.players, self.gen_spawn_points()):
             player.coord = spawn_point
             player.alive = True
+        self.bombs = {}
+        self.fires = {}
+        self.types = {Bomb : self.bombs, Fire : self.fires} # Need better variable name
 
     def gen_spawn_points(self):
         possible_spawns = [
@@ -20,7 +25,8 @@ class WorldMap:
             Coordinate(0, self.height - 1),
             Coordinate(self.width - 1, self.height - 1)
         ]
-        shuffle(possible_spawns)
+        # Comment out shuffle while developing
+        # shuffle(possible_spawns)
         return possible_spawns
 
     def gen_walls(self):
@@ -29,6 +35,12 @@ class WorldMap:
             for y in range(1, self.height, 2):
                 ret.append(y * self.width + x)
         return ret
+
+    def get_new_id(self, objtype):
+        if self.types[objtype]:
+            return max(self.types[objtype]) + 1
+        else:
+            return 0
 
     def to_json(self):
         ret = {}
@@ -44,6 +56,14 @@ class WorldMap:
                 "alive" : player.alive
                 }
             )
+        ret["fires"] = []
+        for fire in self.fires.values():
+            for coord in fire.coords:
+                ret["fires"].append((coord.x, coord.y))
+        ret["bombs"] = []
+        for bomb in self.bombs.values():
+            for coord in bomb.coords:
+                ret["bombs"].append((coord.x, coord.y))
         return json.dumps(ret)
 
     def to_ascii(self):
@@ -55,6 +75,13 @@ class WorldMap:
         # Players
         for i, p in enumerate(self.players):
             asc_map[p.coord.y][p.coord.x] = str(i)
+        # Bombs
+        for b in self.bombs.values():
+            asc_map[b.coord.y][b.coord.x] = "b"
+        # Fires
+        for f in self.fires.values():
+            for coord in f.coords:
+                asc_map[coord.y][coord.x] = "f"
         # Frame
         for row in asc_map:
             row.insert(0, "|")

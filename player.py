@@ -11,6 +11,7 @@ class Player:
         self.coord = None
         self.alive = True
         self.num_bombs = 1
+        self.power = 3
 
     def __str__(self):
         return "Name: {}, id: {}".format(self.name, self.p_id)
