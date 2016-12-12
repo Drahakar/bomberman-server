@@ -1,73 +1,35 @@
 #!/usr/bin/env python
 
-import asyncio
-import websockets
+from websocket import create_connection
 import sys
-from time import sleep
+from threading import Thread
+from json import dumps
 
-@asyncio.coroutine
-def hello():
 
+def receive():
     while True:
-            websocket = None
         try:
-            websocket = yield from websockets.connect('ws://localhost:1234/training')
-            yield from websocket.send('{"type" : "register", "name" : "legget"} ')
-            greeting = yield from websocket.recv()
+            greeting = ws.recv()
             print("< {}".format(greeting))
-            sleep(1)
-
-            yield from websocket.send('{"type" : "start_game", "name" : "legget"}')
-            greeting = yield from websocket.recv()
-            print("< {}".format(greeting))
-            sleep(1)
-
-            for i in range(2):
-                yield from websocket.send('{"type" : "move", "direction" : "RIGHT", "plant_bomb" : false }')
-                greeting = yield from websocket.recv()
-                print("< {}".format(greeting))
-                sleep(1)
-
-            yield from websocket.send('{"type" : "move", "direction" : "DOWN", "plant_bomb" : false }')
-            greeting = yield from websocket.recv()
-            print("< {}".format(greeting))
-            sleep(1)
-
-
-            yield from websocket.send('{"type" : "move", "direction" : "DOWN", "plant_bomb" : true }')
-            greeting = yield from websocket.recv()
-            print("< {}".format(greeting))
-            sleep(1)
-
-            for i in range(7):
-                yield from websocket.send('{"type" : "move", "direction" : "DOWN", "plant_bomb" : false }')
-                greeting = yield from websocket.recv()
-                print("< {}".format(greeting))
-                sleep(1)
-
-
-            yield from websocket.close()
-            sleep(5)
         except:
-            if websocket:
-                yield from websocket.close()
+            pass
 
-    # while True:
-        # try:
-            # name = input("> ")
-            # if name == "quit" or name == "exit":
-                # break
-            # elif name == "reg":
-                # yield from websocket.send('{"type" : "register", "name" : "legget"} ')
-            # elif name == "start":
-                # yield from websocket.send('{"type" : "start_game", "name" : "legget"}')
-            # else:
-                # yield from websocket.send(name)
+ws = create_connection('ws://localhost:1234/training')
 
-            # greeting = yield from websocket.recv()
-            # print("< {}".format(greeting))
-        # except:
-            # pass
+receiver = Thread(target=receive)
+receiver.setDaemon(True)
+receiver.start()
 
-
-asyncio.get_event_loop().run_until_complete(hello())
+while True:
+    name = input("> ")
+    if name == "quit" or name == "exit":
+        break
+    if name == "reg":
+        ws.send('{"type" : "register", "name" : "legget"} ')
+    elif name == "start":
+        ws.send('{"type" : "start_game", "name" : "legget"}')
+    elif name == "con":
+        ws = create_connection('ws://localhost:1234/training')
+    elif name.startswith("m"):
+        to_send = {'type' : 'move', 'direction' : name[1:], 'plant_bomb' : False}
+        ws.send(dumps(to_send))
