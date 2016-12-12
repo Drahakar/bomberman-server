@@ -9,11 +9,8 @@ import utils
 class Game:
     def __init__(self, players, ais, width=11, height=11):
         self.players = players
-        for i in range(ais):
-            self.players.append(Player("Bot"))
         self.ais = ais
-        self.world_map = WorldMap(width, height, players)
-        self.players = self.world_map.players
+        self.world_map = WorldMap(width, height, players.values())
         self.acquired_moves = {}
         self.last_tick = None
         self.ticker = Periodic(self.tick, 3)
@@ -34,6 +31,7 @@ class Game:
         self.last_tick = time()
 
     def tick(self):
+        logging.info("TICKING")
         for bomb in list(self.world_map.bombs.values()):
             bomb.tick(self.world_map)
 
@@ -41,10 +39,12 @@ class Game:
             fire.tick(self.world_map)
 
         self.register_player_moves()
+        self.send_map_to_players()
+        self.acquired_moves = {}
 
     def register_player_moves(self):
-        for player in self.players:
-            direction, plant_bomb = self.acquired_moves[player]
+        for player_client, player in self.players.items():
+            direction, plant_bomb = self.acquired_moves[player_client]
 
             # Movement
             coord_offset = utils.direction_as_movement_delta(direction)
@@ -56,6 +56,10 @@ class Game:
             if plant_bomb and player.num_bombs >= 0:
                 bomb_id = self.world_map.get_new_id(Bomb)
                 self.world_map.bombs[bomb_id] = Bomb(bomb_id, player.coord, player.power)
+
+    def send_map_to_players(self):
+        for client in self.players:
+            client.manual_output("{}\n{}".format(self.world_map.to_json(), self.world_map.to_ascii()))
 
     def get_player_move(self, player, move):
         self.acquired_moves[player] = move
