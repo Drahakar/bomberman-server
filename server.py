@@ -31,7 +31,7 @@ class Server:
 
     @asyncio.coroutine
     def request_handler(self, websocket, path):
-        client = ClientConnect(websocket)
+        client = ClientConnect(self, websocket)
         self.clients.add(client)
         logging.info("Connected clients: {}".format(len(self.clients)))
         while True:
@@ -60,11 +60,14 @@ class Server:
                     sender_task.cancel()
 
             except ConnectionClosed as e:
-                self.clients.remove(client)
-                if websocket in self.registered_players:
-                    del(self.registered_players[client])
-                logging.info("Removed connection. Current connections: {}".format(len(self.clients)))
-                break
+                self.server.remove(self)
+
+    def remove_client(self, client):
+        self.clients.remove(client)
+        if client in self.registered_players:
+            del(self.registered_players[client])
+        logging.info("Removed connection. Current connections: {}".format(len(self.clients)))
+
 
     def time_handler(self, response_time, websocket):
         return response_time > 3 and websocket in self.player_game
@@ -107,7 +110,8 @@ class Server:
 
 class ClientConnect:
 
-    def __init__(self, websocket):
+    def __init__(self, server, websocket):
+        self.server = server
         self.ws = websocket
         self.incoming = asyncio.Queue()
         self.outgoing = asyncio.Queue()
@@ -117,7 +121,11 @@ class ClientConnect:
 
     @asyncio.coroutine
     def get_message(self):
-        msg_in = yield from self.ws.recv()
+        try:
+            msg_in = yield from self.ws.recv()
+        except ConnectionClosed:
+            self.server.remove_client(self)
+            return
         logging.info("Client sent message: {}".format(msg_in))
         yield from self.incoming.put(msg_in)
 
