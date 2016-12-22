@@ -96,7 +96,10 @@ class Server:
             return "You are not in a game"
         current_player = self.registered_players[client]
         current_game = self.player_game[client]
-        current_game.get_player_move(client, (message["direction"], message["plant_bomb"]))
+        try:
+            current_game.get_player_move(client, (message["direction"], message["plant_bomb"]))
+        except KeyError:
+            pass
         current_game.tick_handler()
 
     def start_game(self, a=1, b=1):

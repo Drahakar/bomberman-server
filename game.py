@@ -47,15 +47,18 @@ class Game:
             direction, plant_bomb = self.acquired_moves[player_client]
 
             # Movement
-            coord_offset = utils.direction_as_movement_delta(direction)
-            dest_coord = player.coord + coord_offset
-            if self.world_map.can_move_to(dest_coord, coord_offset):
-                player.coord = dest_coord
+            try:
+                coord_offset = utils.direction_as_movement_delta(direction)
+                dest_coord = player.coord + coord_offset
+                if self.world_map.can_move_to(dest_coord, coord_offset):
+                    player.coord = dest_coord
 
-            # Bomb
-            if plant_bomb and player.num_bombs >= 0:
-                bomb_id = self.world_map.get_new_id(Bomb)
-                self.world_map.bombs[bomb_id] = Bomb(bomb_id, player.coord, player.power)
+                # Bomb
+                if plant_bomb and player.num_bombs >= 0:
+                    bomb_id = self.world_map.get_new_id(Bomb)
+                    self.world_map.bombs[bomb_id] = Bomb(bomb_id, player.coord, player.power)
+            except KeyError:
+                pass
 
     def send_map_to_players(self):
         for client in self.players:
