@@ -25,6 +25,7 @@ class Server:
         }
 
     def start(self):
+        logging.info("Starting server. Listening on {}:{}".format(self.host, self.port))
         start_server = websockets.serve(self.request_handler, self.host, self.port)
         asyncio.get_event_loop().run_until_complete(start_server)
         asyncio.get_event_loop().run_forever()
