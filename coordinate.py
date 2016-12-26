@@ -20,3 +20,6 @@ class Coordinate:
 
     def __eq__(self, other):
         return isinstance(other, Coordinate) and other.x == self.x and other.y == self.y
+
+    def __hash__(self):
+        return hash((self.x, self.y))

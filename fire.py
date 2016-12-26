@@ -1,8 +1,9 @@
 from fire_event import FireEvent
 
 class Fire:
-    def __init__(self, fire_id, coords, duration=3):
+    def __init__(self, fire_id, owner, coords, duration=3):
         self.fire_id = fire_id
+        self.owner = owner
         self.coords = coords
         self.duration = duration
 
