@@ -1,4 +1,5 @@
 from coordinate import Coordinate
+from directions import Direction
 from random import shuffle
 from bomb import Bomb
 from fire import Fire
@@ -41,6 +42,39 @@ class WorldMap:
             return max(self.types[objtype]) + 1
         else:
             return 0
+
+    def add_new_fire(self, player, coord):
+        new_id = self.get_new_id(Fire)
+        fire_tiles = self.get_fire_tiles(coord, player.power)
+        new_fire = Fire(new_id, player, fire_tiles)
+        self.fires[new_id] = new_fire
+        return new_fire
+
+    def add_new_bomb(self, player):
+        player.num_bombs -= 1
+        new_id = self.get_new_id(Bomb)
+        self.bombs[new_id] = Bomb(new_id, player)
+
+    def remove_fire(self, fire):
+        fire.owner.num_bombs += 1
+        del(self.fires[fire.fire_id])
+
+    def explode_bomb(self, bomb):
+        fire = self.add_new_fire(bomb.owner, bomb.coord)
+        del(self.bombs[bomb.bomb_id])
+        return fire
+
+    def get_fire_tiles(self, coord, power):
+        fire_tiles = {coord}
+        for d in [Direction.LEFT, Direction.RIGHT, Direction.UP, Direction.DOWN]:
+            for i in range(1, power):
+                current_coord = coord + (d.x * i, d.y * i)
+                tile_type = self.get_tile_at(current_coord)
+                if tile_type in ["empty", "player"]:
+                    fire_tiles.add(current_coord)
+                else:
+                    break
+        return fire_tiles
 
     def to_json(self):
         ret = {}

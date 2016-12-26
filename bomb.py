@@ -22,30 +22,12 @@ class Bomb:
         self.move_direction = (0, 0)
 
 
-    def tick(self, game_map, event=None):
+    def tick(self, event=None):
         self.life -= 1
-        # Check if alive or not
-        if not self.life or event == BombEvent.EXPLODE:
-            return self.explode(game_map)
+        if not self.life:
+            return BombEvent.EXPLODE
 
-        # Movement of bomb
         if event in Bomb.event_to_movement:
             self.move_direction = Bomb.event_to_movement[event]
         self.coord += self.move_direction
         return event
-
-    def explode(self, game_map):
-        fire_tiles = {self.coord}
-        # Calculate all tiles who will be affected by explosion
-        for d in [Direction.LEFT, Direction.RIGHT, Direction.UP, Direction.DOWN]:
-            for i in range(1, self.power):
-                current_coord = self.coord + (d.x * i, d.y * i)
-                tile_type = game_map.get_tile_at(current_coord)
-                if tile_type in ["empty", "player"]:
-                    fire_tiles.add(current_coord)
-                else:
-                    break
-        fire_id = game_map.get_new_id(Fire)
-        game_map.fires[fire_id] = Fire(fire_id, self.owner, fire_tiles)
-        del(game_map.bombs[self.bomb_id])
-        return game_map.fires[fire_id]

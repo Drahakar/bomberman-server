@@ -7,11 +7,9 @@ class Fire:
         self.coords = coords
         self.duration = duration
 
-    def tick(self, game_map, event=None):
+    def tick(self):
         self.duration -= 1
-        # Check if alive or not
         if self.duration:
             return FireEvent.BURNING
         else:
-            del(game_map.fires[self.fire_id])
             return FireEvent.BURN_OUT

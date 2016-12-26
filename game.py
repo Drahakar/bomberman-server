@@ -1,5 +1,6 @@
 from bomb import Bomb
 from fire_event import FireEvent
+from bomb_event import BombEvent
 from player import Player
 from time import time
 from timer import Periodic
@@ -24,7 +25,6 @@ class Game:
         if not force:
             if len(self.acquired_moves) == len(self.players) - self.ais: #temporary ai fix
                 self.tick()
-
         else:
             if not time() - self.last_tick > 3:
                 return
@@ -32,17 +32,17 @@ class Game:
         self.last_tick = time()
 
     def tick(self):
-        logging.info("TICKING")
         for bomb in list(self.world_map.bombs.values()):
-            bomb.tick(self.world_map)
+            if bomb.tick() == BombEvent.EXPLODE:
+                self.world_map.explode_bomb(bomb)
 
         # Union all fire coordinates into a set
         all_fire_coords = set()
         for fire in list(self.world_map.fires.values()):
-            if fire.tick(self.world_map) != FireEvent.BURN_OUT:
+            if fire.tick() != FireEvent.BURN_OUT:
                 all_fire_coords = all_fire_coords.union(fire.coords)
             else:
-                fire.owner.num_bombs += 1
+                self.world_map.remove_fire(fire)
 
         # Try to blow up all bombs, including spawning new fire for the blown up
         # bombs. Keep looping until no bomb has exploded within the loop.
@@ -51,8 +51,8 @@ class Game:
             bombs_exploded = False
             for bomb in list(self.world_map.bombs.values()):
                 if bomb.coord in all_fire_coords:
-                    new_fire = bomb.explode(self.world_map)
-                    new_fire.tick(self.world_map) # Tick new fire to match the triggering fire.
+                    new_fire = self.world_map.explode_bomb(bomb)
+                    new_fire.tick() # Tick new fire to match the triggering fire.
                     all_fire_coords = all_fire_coords.union(new_fire.coords)
                     bombs_exploded = True
 
@@ -77,9 +77,7 @@ class Game:
 
                 # Bomb
                 if plant_bomb and player.num_bombs > 0:
-                    bomb_id = self.world_map.get_new_id(Bomb)
-                    self.world_map.bombs[bomb_id] = Bomb(bomb_id, player)
-                    player.num_bombs -= 1
+                    self.world_map.add_new_bomb(player)
             except KeyError:
                 pass
 
