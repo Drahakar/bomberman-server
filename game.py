@@ -1,8 +1,9 @@
-from player import Player
 from bomb import Bomb
-from world_map import WorldMap
+from fire_event import FireEvent
+from player import Player
 from time import time
 from timer import Periodic
+from world_map import WorldMap
 import logging
 import utils
 
@@ -35,8 +36,29 @@ class Game:
         for bomb in list(self.world_map.bombs.values()):
             bomb.tick(self.world_map)
 
+        # Union all fire coordinates into a set
+        all_fire_coords = set()
         for fire in list(self.world_map.fires.values()):
-            fire.tick(self.world_map)
+            if fire.tick(self.world_map) != FireEvent.BURN_OUT:
+                all_fire_coords = all_fire_coords.union(fire.coords)
+            else:
+                fire.owner.num_bombs += 1
+
+        # Try to blow up all bombs, including spawning new fire for the blown up
+        # bombs. Keep looping until no bomb has exploded within the loop.
+        bombs_exploded = True
+        while bombs_exploded:
+            bombs_exploded = False
+            for bomb in list(self.world_map.bombs.values()):
+                if bomb.coord in all_fire_coords:
+                    new_fire = bomb.explode(self.world_map)
+                    new_fire.tick(self.world_map) # Tick new fire to match the triggering fire.
+                    all_fire_coords = all_fire_coords.union(new_fire.coords)
+                    bombs_exploded = True
+
+        for player in self.players.values():
+            if player.coord in all_fire_coords:
+                logging.info("Player {} is in fire {}".format(player.name, fire.fire_id))
 
         self.register_player_moves()
         self.send_map_to_players()
@@ -54,9 +76,10 @@ class Game:
                     player.coord = dest_coord
 
                 # Bomb
-                if plant_bomb and player.num_bombs >= 0:
+                if plant_bomb and player.num_bombs > 0:
                     bomb_id = self.world_map.get_new_id(Bomb)
-                    self.world_map.bombs[bomb_id] = Bomb(bomb_id, player.coord, player.power)
+                    self.world_map.bombs[bomb_id] = Bomb(bomb_id, player)
+                    player.num_bombs -= 1
             except KeyError:
                 pass
 
