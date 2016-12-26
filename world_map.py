@@ -62,8 +62,7 @@ class WorldMap:
                 ret["fires"].append((coord.x, coord.y))
         ret["bombs"] = []
         for bomb in self.bombs.values():
-            for coord in bomb.coords:
-                ret["bombs"].append((coord.x, coord.y))
+            ret["bombs"].append((bomb.coord.x, bomb.coord.y))
         return json.dumps(ret)
 
     def to_ascii(self):
