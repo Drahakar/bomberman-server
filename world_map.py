@@ -42,7 +42,7 @@ class WorldMap:
         ret = []
         for x in range(1, self.width, 2):
             for y in range(1, self.height, 2):
-                ret.append(y * self.width + x)
+                ret.append(Coordinate(x,y))
         return ret
 
     def gen_boxes(self):
@@ -108,22 +108,22 @@ class WorldMap:
         ret["map"] = {}
         ret["map"]["width"] = self.width
         ret["map"]["height"] = self.height
-        ret["map"]["walls"] = self.walls
+        ret["map"]["walls"] = list(map(lambda c: self.coord_to_pos(c), self.walls))
         ret["players"] = []
         for player in self.players:
             ret["players"].append({
                 "id" : player.p_id,
-                "coord" : (player.coord.x, player.coord.y),
+                "pos" : self.coord_to_pos(player.coord),
                 "alive" : player.alive
                 }
             )
         ret["fires"] = []
         for fire in self.fires.values():
             for coord in fire.coords:
-                ret["fires"].append((coord.x, coord.y))
+                ret["fires"].append(self.coord_to_pos(coord))
         ret["bombs"] = []
         for bomb in self.bombs.values():
-            ret["bombs"].append((bomb.coord.x, bomb.coord.y))
+            ret["bombs"].append(self.coord_to_pos(bomb.coord))
         ret["boxes"] = []
         for box in self.boxes:
             ret["boxes"].append(self.coord_to_pos(box.coord))
@@ -134,9 +134,8 @@ class WorldMap:
     def to_ascii(self):
         asc_map = [[" " for x in range(self.width)] for y in range(self.height)] 
         # Walls
-        for w in self.walls:
-            w_coord = self.pos_to_coord(w)
-            asc_map[w_coord.y][w_coord.x] = "w"
+        for w_coord in self.walls:
+            asc_map[w_coord.y][w_coord.x] = "|"
         # Players
         for i, p in enumerate(self.players):
             asc_map[p.coord.y][p.coord.x] = str(i)
@@ -171,11 +170,10 @@ class WorldMap:
         return 0 <= coord.x <= self.width - 1 and 0 <= coord.y <= self.height - 1
 
     def get_tile_at(self, coord):
-        pos = self.coord_to_pos(coord)
         for p in self.players:
             if coord == p.coord:
                 return "player"
-        if pos in self.walls:
+        if coord in self.walls:
             return "wall"
         if coord in self.boxes:
             return "box"
@@ -185,7 +183,4 @@ class WorldMap:
             return "wall"
 
     def can_move_to(self, coord, direction):
-        logging.info("{}".format(self.get_tile_at(coord)))
-        # TODO:
-        # if tile_type == "bomb": 
         return self.get_tile_at(coord) == "empty"
