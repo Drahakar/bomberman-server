@@ -2,7 +2,10 @@ from coordinate import Coordinate
 from directions import Direction
 from random import shuffle
 from bomb import Bomb
+from box import Box
 from fire import Fire
+from random import sample
+import config
 import json
 import logging
 
@@ -15,9 +18,14 @@ class WorldMap:
         for player, spawn_point in zip(self.players, self.gen_spawn_points()):
             player.coord = spawn_point
             player.alive = True
+        self.boxes = self.gen_boxes()
         self.bombs = {}
         self.fires = {}
-        self.types = {Bomb : self.bombs, Fire : self.fires} # Need better variable name
+        self.types = {
+            Bomb : self.bombs,
+            Fire : self.fires,
+            Box : self.boxes
+        } # Need better variable name
 
     def gen_spawn_points(self):
         possible_spawns = [
@@ -36,6 +44,25 @@ class WorldMap:
             for y in range(1, self.height, 2):
                 ret.append(y * self.width + x)
         return ret
+
+    def gen_boxes(self):
+        possible_box_coords = set()
+        for x in range(self.width):
+            for y in range(self.height):
+                possible_box_coords.add(Coordinate(x,y))
+        possible_box_coords -= set(self.walls)
+
+        for player in self.players:
+            for d in Direction.all():
+                try:
+                    possible_box_coords.remove(player.coord - (d.x, d.y))
+                    possible_box_coords.remove(player.coord - (2 * d.x, 2 * d.y))
+                except KeyError:
+                    pass
+        box_coords = sample(
+            possible_box_coords,
+            round(len(possible_box_coords) * config.BOX_DENSITY))
+        return list(map(lambda coord: Box(coord), box_coords))
 
     def get_new_id(self, objtype):
         if self.types[objtype]:
@@ -97,6 +124,11 @@ class WorldMap:
         ret["bombs"] = []
         for bomb in self.bombs.values():
             ret["bombs"].append((bomb.coord.x, bomb.coord.y))
+        ret["boxes"] = []
+        for box in self.boxes:
+            ret["boxes"].append(self.coord_to_pos(box.coord))
+        logging.info(ret)
+
         return json.dumps(ret)
 
     def to_ascii(self):
@@ -115,6 +147,10 @@ class WorldMap:
         for f in self.fires.values():
             for coord in f.coords:
                 asc_map[coord.y][coord.x] = "f"
+        # Boxes
+        for b in self.boxes:
+            asc_map[b.coord.y][b.coord.x] = "X"
+
         # Frame
         for row in asc_map:
             row.insert(0, "|")
@@ -141,6 +177,8 @@ class WorldMap:
                 return "player"
         if pos in self.walls:
             return "wall"
+        if coord in self.boxes:
+            return "box"
         if self.inside_map(coord):
             return "empty"    
         else:
