@@ -56,6 +56,15 @@ class Game:
                     all_fire_coords = all_fire_coords.union(new_fire.coords)
                     bombs_exploded = True
 
+        # This feels kind of ugly.
+        boxes_ticking = []
+        for box in self.world_map.boxes_to_remove:
+            if box.tick():
+                boxes_ticking.append(box)
+            else:
+                del(self.world_map.boxes[box.coord])
+        self.world_map.boxes_to_remove = boxes_ticking
+
         for player in self.players.values():
             if player.coord in all_fire_coords:
                 logging.info("Player {} is in fire {}".format(player.name, fire.fire_id))

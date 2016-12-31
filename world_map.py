@@ -19,6 +19,7 @@ class WorldMap:
             player.coord = spawn_point
             player.alive = True
         self.boxes = self.gen_boxes()
+        self.boxes_to_remove = []
         self.bombs = {}
         self.fires = {}
         self.types = {
@@ -62,7 +63,7 @@ class WorldMap:
         box_coords = sample(
             possible_box_coords,
             round(len(possible_box_coords) * config.BOX_DENSITY))
-        return list(map(lambda coord: Box(coord), box_coords))
+        return {coord : Box(coord) for coord in box_coords}
 
     def get_new_id(self, objtype):
         if self.types[objtype]:
@@ -97,7 +98,11 @@ class WorldMap:
             for i in range(1, power):
                 current_coord = coord + (d.x * i, d.y * i)
                 tile_type = self.get_tile_at(current_coord)
-                if tile_type in ["empty", "player"]:
+                if tile_type == "box":
+                    self.boxes_to_remove.append(self.boxes[current_coord])
+                    fire_tiles.add(current_coord)
+                    break
+                elif tile_type in ["empty", "player"]:
                     fire_tiles.add(current_coord)
                 else:
                     break
@@ -125,7 +130,7 @@ class WorldMap:
         for bomb in self.bombs.values():
             ret["bombs"].append(self.coord_to_pos(bomb.coord))
         ret["boxes"] = []
-        for box in self.boxes:
+        for box in self.boxes.values():
             ret["boxes"].append(self.coord_to_pos(box.coord))
         logging.info(ret)
 
@@ -142,13 +147,13 @@ class WorldMap:
         # Bombs
         for b in self.bombs.values():
             asc_map[b.coord.y][b.coord.x] = "b"
+        # Boxes
+        for b in self.boxes.values():
+            asc_map[b.coord.y][b.coord.x] = "X"
         # Fires
         for f in self.fires.values():
             for coord in f.coords:
                 asc_map[coord.y][coord.x] = "f"
-        # Boxes
-        for b in self.boxes:
-            asc_map[b.coord.y][b.coord.x] = "X"
 
         # Frame
         for row in asc_map:
