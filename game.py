@@ -2,11 +2,13 @@ from bomb import Bomb
 from fire_event import FireEvent
 from bomb_event import BombEvent
 from player import Player
+from random import choice
 from time import time
 from timer import Periodic
 from world_map import WorldMap
 import logging
 import utils
+import powerups
 
 class Game:
     def __init__(self, players, ais, width=11, height=11):
@@ -62,6 +64,7 @@ class Game:
             if box.tick():
                 boxes_ticking.append(box)
             else:
+                self.world_map.powerups[box.coord] = choice(powerups.all())(box.coord)
                 del(self.world_map.boxes[box.coord])
         self.world_map.boxes_to_remove = boxes_ticking
 
@@ -82,6 +85,9 @@ class Game:
                 coord_offset = utils.direction_as_movement_delta(direction)
                 dest_coord = player.coord + coord_offset
                 if self.world_map.can_move_to(dest_coord, coord_offset):
+                    if self.world_map.get_tile_at(dest_coord) == "powerup":
+                        self.world_map.powerups[dest_coord].use(player)
+                        del(self.world_map.powerups[dest_coord])
                     player.coord = dest_coord
 
                 # Bomb

@@ -22,6 +22,7 @@ class WorldMap:
         self.boxes_to_remove = []
         self.bombs = {}
         self.fires = {}
+        self.powerups = {}
         self.types = {
             Bomb : self.bombs,
             Fire : self.fires,
@@ -96,14 +97,17 @@ class WorldMap:
         fire_tiles = {coord}
         for d in [Direction.LEFT, Direction.RIGHT, Direction.UP, Direction.DOWN]:
             for i in range(1, power):
+
                 current_coord = coord + (d.x * i, d.y * i)
                 tile_type = self.get_tile_at(current_coord)
-                if tile_type == "box":
-                    self.boxes_to_remove.append(self.boxes[current_coord])
+
+                if tile_type != "wall":
                     fire_tiles.add(current_coord)
-                    break
-                elif tile_type in ["empty", "player"]:
-                    fire_tiles.add(current_coord)
+                    if tile_type == "box":
+                        self.boxes_to_remove.append(self.boxes[current_coord])
+                        break
+                    elif tile_type == "powerup":
+                        del(self.powerups[current_coord])
                 else:
                     break
         return fire_tiles
@@ -132,6 +136,9 @@ class WorldMap:
         ret["boxes"] = []
         for box in self.boxes.values():
             ret["boxes"].append(self.coord_to_pos(box.coord))
+        ret["powerups"] = []
+        for powerup in self.powerups.values():
+            ret["powerups"].append(self.coord_to_pos(powerup.coord))
         logging.info(ret)
 
         return json.dumps(ret)
@@ -150,6 +157,9 @@ class WorldMap:
         # Boxes
         for b in self.boxes.values():
             asc_map[b.coord.y][b.coord.x] = "X"
+        # Powerups
+        for p in self.powerups.values():
+            asc_map[p.coord.y][p.coord.x] = "P"
         # Fires
         for f in self.fires.values():
             for coord in f.coords:
@@ -182,10 +192,12 @@ class WorldMap:
             return "wall"
         if coord in self.boxes:
             return "box"
+        if coord in self.powerups:
+            return "powerup"
         if self.inside_map(coord):
             return "empty"    
         else:
             return "wall"
 
     def can_move_to(self, coord, direction):
-        return self.get_tile_at(coord) == "empty"
+        return self.get_tile_at(coord) in ["empty", "powerup"]
