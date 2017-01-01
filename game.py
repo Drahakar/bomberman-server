@@ -58,15 +58,14 @@ class Game:
                     all_fire_coords = all_fire_coords.union(new_fire.coords)
                     bombs_exploded = True
 
-        # This feels kind of ugly.
-        boxes_ticking = []
-        for box in self.world_map.boxes_to_remove:
-            if box.tick():
-                boxes_ticking.append(box)
-            else:
+        i = 0
+        while i < len(self.world_map.boxes_to_remove):
+            box = self.world_map.boxes_to_remove[i]
+            if not box.tick():
                 self.world_map.powerups[box.coord] = choice(powerups.all())(box.coord)
                 del(self.world_map.boxes[box.coord])
-        self.world_map.boxes_to_remove = boxes_ticking
+            else:
+                i += 1
 
         for player in self.players.values():
             if player.coord in all_fire_coords:
