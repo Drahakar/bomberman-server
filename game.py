@@ -40,7 +40,7 @@ class Game:
 
         # Union all fire coordinates into a set
         all_fire_coords = set()
-        for fire in list(self.world_map.fires.values()):
+        for fire in list(self.world_map.fires):
             if fire.tick() != FireEvent.BURN_OUT:
                 all_fire_coords = all_fire_coords.union(fire.coords)
             else:
@@ -58,15 +58,6 @@ class Game:
                     all_fire_coords = all_fire_coords.union(new_fire.coords)
                     bombs_exploded = True
 
-        i = 0
-        while i < len(self.world_map.boxes_to_remove):
-            box = self.world_map.boxes_to_remove[i]
-            if not box.tick():
-                self.world_map.powerups[box.coord] = choice(powerups.all())(box.coord)
-                del(self.world_map.boxes[box.coord])
-            else:
-                i += 1
-
         for player in self.players.values():
             if player.coord in all_fire_coords:
                 logging.info("Player {} is in fire".format(player.name, fire))
@@ -79,15 +70,16 @@ class Game:
         for player_client, player in self.players.items():
             direction, plant_bomb = self.acquired_moves[player_client]
 
-            # Movement
             try:
-                coord_offset = utils.direction_as_movement_delta(direction)
-                dest_coord = player.coord + coord_offset
-                if self.world_map.can_move_to(dest_coord, coord_offset):
-                    if self.world_map.get_tile_at(dest_coord) == "powerup":
-                        self.world_map.powerups[dest_coord].use(player)
-                        del(self.world_map.powerups[dest_coord])
-                    player.coord = dest_coord
+                # Movement
+                direction = utils.direction_as_movement_delta(direction)
+                dest_coord = player.coord + direction
+                target_tile = self.world_map.get_classes_at(dest_coord)
+
+                elif self.world_map.can_move_to(player.coord, direction):
+                    if Powerup in target_tile:
+                        self.world_map.use_powerup(dest_coord, player)
+                    self.world_map.move_object(player, player.coord, dest_coord)
 
                 # Bomb
                 if plant_bomb and player.num_bombs > 0:
