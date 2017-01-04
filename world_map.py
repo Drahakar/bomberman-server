@@ -145,26 +145,10 @@ class WorldMap:
 
     def to_ascii(self):
         asc_map = [[" " for x in range(self.width)] for y in range(self.height)] 
-        # Walls
-        for w_coord in self.walls:
-            asc_map[w_coord.y][w_coord.x] = "|"
-        # Players
-        for i, p in enumerate(self.players):
-            asc_map[p.coord.y][p.coord.x] = str(i)
-        # Bombs
-        for b in self.bombs.values():
-            asc_map[b.coord.y][b.coord.x] = "b"
-        # Boxes
-        for b in self.boxes.values():
-            asc_map[b.coord.y][b.coord.x] = "X"
-        # Powerups
-        for p in self.powerups.values():
-            asc_map[p.coord.y][p.coord.x] = "P"
-        # Fires
-        for f in self.fires.values():
-            for coord in f.coords:
-                asc_map[coord.y][coord.x] = "f"
-
+        for x in range(self.width):
+            for y in range(self.height):
+                for c in self.tiles[Coordinate(x,y)].content:
+                    asc_map[y][x] = c.ascii()
         # Frame
         for row in asc_map:
             row.insert(0, "|")

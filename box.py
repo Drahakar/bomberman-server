@@ -11,6 +11,8 @@ class Box:
         self.time_until_removal -= 1
         return self.time_until_removal
 
+    def ascii(self):
+        return "X"
 
     def __hash__(self):
         return hash(self.coord)

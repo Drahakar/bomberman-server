@@ -14,6 +14,9 @@ class Player:
         self.num_bombs = config.INITIAL_BOMB_AMOUNT
         self.power = config.INITIAL_POWER
 
+    def ascii(self):
+        return "p"
+
     def __str__(self):
         return "Name: {}, id: {}".format(self.name, self.p_id)
 

@@ -5,3 +5,6 @@ class Powerup:
     def use(self, player):
         raise NotImplementedError
 
+    def ascii(self):
+        return "P"
+

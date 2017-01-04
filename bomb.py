@@ -31,3 +31,5 @@ class Bomb:
             self.move_direction = Bomb.event_to_movement[event]
         self.coord += self.move_direction
         return event
+    def ascii(self):
+        return "b"

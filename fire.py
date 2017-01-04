@@ -13,3 +13,6 @@ class Fire:
             return FireEvent.BURNING
         else:
             return FireEvent.BURN_OUT
+
+    def ascii(self):
+        return "f"
