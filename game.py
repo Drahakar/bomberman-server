@@ -97,7 +97,7 @@ class Game:
 
     def send_map_to_players(self):
         for client in self.players:
-            client.manual_output("{}\n{}".format(self.world_map.to_json(), self.world_map.to_ascii()))
+            client.manual_output("{}".format(self.world_map.to_ascii()))
 
     def get_player_move(self, player, move):
         self.acquired_moves[player] = move

@@ -108,7 +108,7 @@ class Server:
         for player in self.registered_players:
             self.player_game[player] = game
         for client in self.registered_players:
-            client.manual_output("{}\n{}".format(game.world_map.to_json(), game.world_map.to_ascii()))
+            client.manual_output("{}".format(game.world_map.to_ascii()))
         return "Sent Gamestart to people"
 
 

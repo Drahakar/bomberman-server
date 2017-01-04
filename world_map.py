@@ -112,37 +112,6 @@ class WorldMap:
                     break
         return fire_tiles
 
-    def to_json(self):
-        ret = {}
-        ret["map"] = {}
-        ret["map"]["width"] = self.width
-        ret["map"]["height"] = self.height
-        ret["map"]["walls"] = list(map(lambda c: self.coord_to_pos(c), self.walls))
-        ret["players"] = []
-        for player in self.players:
-            ret["players"].append({
-                "id" : player.p_id,
-                "pos" : self.coord_to_pos(player.coord),
-                "alive" : player.alive
-                }
-            )
-        ret["fires"] = []
-        for fire in self.fires.values():
-            for coord in fire.coords:
-                ret["fires"].append(self.coord_to_pos(coord))
-        ret["bombs"] = []
-        for bomb in self.bombs.values():
-            ret["bombs"].append(self.coord_to_pos(bomb.coord))
-        ret["boxes"] = []
-        for box in self.boxes.values():
-            ret["boxes"].append(self.coord_to_pos(box.coord))
-        ret["powerups"] = []
-        for powerup in self.powerups.values():
-            ret["powerups"].append(self.coord_to_pos(powerup.coord))
-        logging.info(ret)
-
-        return json.dumps(ret)
-
     def to_ascii(self):
         asc_map = [[" " for x in range(self.width)] for y in range(self.height)] 
         for x in range(self.width):
