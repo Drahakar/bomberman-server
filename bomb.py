@@ -1,3 +1,4 @@
+import config
 import utils
 import logging
 from directions import Direction
@@ -13,8 +14,7 @@ class Bomb:
         BombEvent.STOP : Direction.STAY
     }
 
-    def __init__(self, bomb_id, player, life=5):
-        self.bomb_id = bomb_id
+    def __init__(self, player, life=config.BOMB_TIMER):
         self.owner = player
         self.coord = player.coord
         self.life = life

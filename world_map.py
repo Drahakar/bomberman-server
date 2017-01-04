@@ -66,31 +66,25 @@ class WorldMap:
             round(len(possible_box_coords) * config.BOX_DENSITY))
         return {coord : Box(coord) for coord in box_coords}
 
-    def get_new_id(self, objtype):
-        if self.types[objtype]:
-            return max(self.types[objtype]) + 1
-        else:
-            return 0
 
     def add_new_fire(self, player, coord):
-        new_id = self.get_new_id(Fire)
         fire_tiles = self.get_fire_tiles(coord, player.power)
-        new_fire = Fire(new_id, player, fire_tiles)
-        self.fires[new_id] = new_fire
+        new_fire = Fire(player, fire_coords)
+        self.fires.add(new_fire)
         return new_fire
 
     def add_new_bomb(self, player):
         player.num_bombs -= 1
-        new_id = self.get_new_id(Bomb)
-        self.bombs[new_id] = Bomb(new_id, player)
+        bomb = Bomb(player)
+        self.bombs[player.coord] = bomb
 
     def remove_fire(self, fire):
         fire.owner.num_bombs += 1
-        del(self.fires[fire.fire_id])
+        self.fires.remove(fire)
 
     def explode_bomb(self, bomb):
         fire = self.add_new_fire(bomb.owner, bomb.coord)
-        del(self.bombs[bomb.bomb_id])
+        del(self.bombs[bomb.coord])
         return fire
 
     def get_fire_tiles(self, coord, power):

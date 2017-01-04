@@ -1,8 +1,8 @@
+import config
 from fire_event import FireEvent
 
 class Fire:
-    def __init__(self, fire_id, owner, coords, duration=3):
-        self.fire_id = fire_id
+    def __init__(self, owner, coords, duration=config.FIRE_DURATION):
         self.owner = owner
         self.coords = coords
         self.duration = duration
