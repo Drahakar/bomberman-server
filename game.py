@@ -2,6 +2,7 @@ from bomb import Bomb
 from fire_event import FireEvent
 from bomb_event import BombEvent
 from player import Player
+from powerups import Powerup
 from random import choice
 from time import time
 from timer import Periodic
@@ -37,6 +38,9 @@ class Game:
         for bomb in list(self.world_map.bombs.values()):
             if bomb.tick() == BombEvent.EXPLODE:
                 self.world_map.explode_bomb(bomb)
+            else:
+                if bomb.is_moving() and self.world_map.can_move_to(bomb.coord, bomb.move_direction):
+                    self.world_map.move_bomb(bomb)
 
         # Union all fire coordinates into a set
         all_fire_coords = set()
@@ -76,6 +80,8 @@ class Game:
                 dest_coord = player.coord + direction
                 target_tile = self.world_map.get_classes_at(dest_coord)
 
+                if Bomb in target_tile and player.can_push_bombs:
+                    self.world_map.bombs[dest_coord].set_movement(direction)
                 elif self.world_map.can_move_to(player.coord, direction):
                     if Powerup in target_tile:
                         self.world_map.use_powerup(dest_coord, player)

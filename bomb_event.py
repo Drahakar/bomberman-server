@@ -1,2 +1,2 @@
 class BombEvent:
-    EXPLODE, PUSH_LEFT, PUSH_RIGHT, PUSH_UP, PUSH_DOWN, STOP = range(6)
+    EXPLODE = 0

@@ -6,30 +6,26 @@ from bomb_event import BombEvent
 from fire import Fire
 
 class Bomb:
-    event_to_movement = {
-        BombEvent.PUSH_LEFT : Direction.LEFT,
-        BombEvent.PUSH_RIGHT : Direction.RIGHT,
-        BombEvent.PUSH_UP : Direction.UP,
-        BombEvent.PUSH_DOWN : Direction.DOWN,
-        BombEvent.STOP : Direction.STAY
-    }
-
     def __init__(self, player, life=config.BOMB_TIMER):
         self.owner = player
         self.coord = player.coord
         self.life = life
         self.power = player.power
-        self.move_direction = (0, 0)
+        self.move_direction = Direction.STAY
 
+    def set_movement(self, direction):
+        self.move_direction = direction
 
-    def tick(self, event=None):
+    def is_moving(self):
+        return self.move_direction != Direction.STAY
+
+    def next_coord(self):
+        return self.coord + self.move_direction
+
+    def tick(self):
         self.life -= 1
         if not self.life:
             return BombEvent.EXPLODE
 
-        if event in Bomb.event_to_movement:
-            self.move_direction = Bomb.event_to_movement[event]
-        self.coord += self.move_direction
-        return event
     def ascii(self):
         return "b"

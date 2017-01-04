@@ -87,6 +87,10 @@ class WorldMap:
         self.tiles[dest_coord].add(obj)
         obj.coord = dest_coord
 
+    def move_bomb(self, bomb):
+        del(self.bombs[bomb.coord])
+        self.bombs[bomb.next_coord()] = bomb
+        self.move_object(bomb, bomb.coord, bomb.next_coord())
 
     def add_new_fire(self, player, coord):
         fire_coords = self.get_fire_coords(coord, player.power)
