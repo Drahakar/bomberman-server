@@ -88,7 +88,8 @@ class Game:
                     self.world_map.move_object(player, player.coord, dest_coord)
 
                 # Bomb
-                if plant_bomb and player.num_bombs > 0:
+                target_tile = self.world_map.get_classes_at(player.coord)
+                if plant_bomb and player.num_bombs > 0 and not Bomb in target_tile:
                     self.world_map.add_new_bomb(player)
             except KeyError:
                 pass
