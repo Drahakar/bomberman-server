@@ -14,8 +14,8 @@ class Server:
         self.host = listen_host
         self.port = listen_port
         self.clients = set()
-        self.registered_players = {}
-        self.player_game = {}
+        self.registered_clients = {}
+        self.client_to_game = {}
         self.games = set()
         logging.basicConfig(format="%(asctime)s %(levelname)s  %(message)s", level=loglevel)
         self.types = {
@@ -65,13 +65,12 @@ class Server:
 
     def remove_client(self, client):
         self.clients.remove(client)
-        if client in self.registered_players:
-            del(self.registered_players[client])
+        if client in self.registered_clients:
+            del(self.registered_clients[client])
         logging.info("Removed connection. Current connections: {}".format(len(self.clients)))
 
-
     def time_handler(self, response_time, websocket):
-        return response_time > 3 and websocket in self.player_game
+        return response_time > 3 and websocket in self.client_to_game
 
     def message_handler(self, message, client):
         try: 
@@ -79,37 +78,49 @@ class Server:
             return self.types[message["type"]](message, client)
         except (ValueError, KeyError) as e:
             logging.debug(traceback.print_exc())
-            return "Invalid request: {}".format(e)
+            return self.send_reply(client, "error", "Invalid request.")
 
     def register_player(self, message, client):
-        if client in self.registered_players:
-            return "Player already registered"
+        if client in self.registered_clients:
+            return self.send_reply(client, "error", "Player already registered")
         else:
-            self.registered_players[client] = Player(message["name"])
-            # if len(self.registered_players) == 1:
-                # self.start_game()
-            logging.info("Registered players: {}".format(self.registered_players))
-            return "Player registered"
+            self.registered_clients[client] = Player(message["name"])
+            logging.info("Registered players: {}".format(self.registered_clients))
+            return self.send_reply(client, "info", "You are now registered. Waiting for game...")
 
     def register_move(self, message, client):
-        if client not in self.player_game:
-            return "You are not in a game"
-        current_player = self.registered_players[client]
-        current_game = self.player_game[client]
+        if client not in self.client_to_game:
+            return self.send_reply(client, "error", "You are not in a game")
+        current_player = self.registered_clients[client]
+        current_game = self.client_to_game[client]
         try:
-            current_game.get_player_move(client, (message["direction"], message["plant_bomb"]))
+            if current_player in current_game.world_map.players:
+                current_game.get_player_move(client, (message["direction"], message["plant_bomb"]))
+            else:
+                return self.send_reply(client, "game_over", "You are dead, you have to wait for the game to finish.")
+
         except KeyError:
             pass
         current_game.tick_handler()
+        if current_game.ended:
+            self.end_game(current_game)
 
-    def start_game(self, a=1, b=1):
-        game = Game(self.registered_players, 0)
+    def start_game(self):
+        game = Game(self.registered_clients, 0)
         logging.info("Starting game")
-        for player in self.registered_players:
-            self.player_game[player] = game
-        for client in self.registered_players:
+        for client in self.registered_clients:
+            self.client_to_game[client] = game
+        for client in self.registered_clients:
             client.manual_output("{}".format(game.world_map.to_ascii()))
-        return "Sent Gamestart to people"
+
+    def end_game(self, game):
+        for client in list(game.players):
+            del(self.registered_clients[client])
+            del(self.client_to_game[client])
+        # TODO: Save game
+
+    def send_reply(self, client, event, text):
+        client.manual_output(json.dumps({'event' : event, 'text' : text}))
 
 
 class ClientConnect:
@@ -136,9 +147,7 @@ class ClientConnect:
     @asyncio.coroutine
     def parse_incoming(self, server):
         msg_to_consume = yield from self.incoming.get()
-        msg_to_consume = server.message_handler(msg_to_consume, self)
-        if msg_to_consume:
-            yield from self.outgoing.put(msg_to_consume)
+        server.message_handler(msg_to_consume, self)
 
     @asyncio.coroutine
     def send_message(self, message):
