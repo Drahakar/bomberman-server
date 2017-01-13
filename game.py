@@ -1,12 +1,14 @@
 from bomb import Bomb
 from fire_event import FireEvent
 from bomb_event import BombEvent
+from itertools import groupby
 from player import Player
 from powerups import Powerup
 from random import choice
 from time import time
 from timer import Periodic
 from world_map import WorldMap
+import json
 import logging
 import utils
 import powerups
@@ -77,6 +79,7 @@ class Game:
         self.register_player_moves()
         if len(self.world_map.players) <= 1:
             self.ended = True
+            self.send_result_to_players()
         else:
             self.send_map_to_players()
             self.acquired_moves = {}
@@ -105,7 +108,30 @@ class Game:
             except KeyError:
                 pass
 
+    def create_leaderboard(self):
+        result = []
+
+        if self.world_map.players: # Put winner first
+            result.append((1, self.world_map.players.pop()))
+        else:
+            for key, value in groupby(self.dead_players[::-1], lambda x: x[1]):
+                place = len(result) + 1
+                for _, _, player in value:
+                    result.append((place, player))
+
+        return result
+
     def kill_player(self, player):
+        if not self.dead_players:
+            self.dead_players.append((self.ticks, 0, player))
+        else:
+            prev_tick, i, _ = self.dead_players[-1]
+            if self.ticks == prev_tick:
+                kill_num = i
+            else:
+                kill_num = i + 1
+            self.dead_players.append((self.ticks, kill_num, player))
+
         self.world_map.remove_player(player)
 
     def send_map_to_players(self):
@@ -113,7 +139,12 @@ class Game:
             if player in self.world_map.players:
                 client.manual_output("{}".format(self.world_map.to_ascii()))
 
+    def send_result_to_players(self):
+        outp = {'event' : 'game_end'}
+        self.leaderboard = ["{}: {}".format(place, player) for place, player in self.create_leaderboard()]
+        outp['leaderboard'] = self.leaderboard
         for client in self.players:
+            client.manual_output(json.dumps(outp, indent=True))
 
     def get_player_move(self, client, move):
         if self.players[client].hp:
