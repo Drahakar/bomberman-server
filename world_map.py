@@ -132,6 +132,10 @@ class WorldMap:
     def use_powerup(self, coord, player=None):
         powerup = self.powerups[coord]
         if player:
+            logging.info("Player {} picked up {}".format(
+                player.name,
+                powerup.__class__.__name__)
+            )
             powerup.use(player)
         self.tiles[coord].remove(powerup)
         del(self.powerups[coord])
