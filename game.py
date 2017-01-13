@@ -15,9 +15,12 @@ class Game:
     def __init__(self, players, ais, width=11, height=11):
         self.players = players
         self.ais = ais
-        self.world_map = WorldMap(width, height, players.values())
+        self.world_map = WorldMap(width, height, set(players.values()))
         self.acquired_moves = {}
         self.last_tick = None
+        self.ticks = 0
+        self.ended = False
+        self.dead_players = []
         self.ticker = Periodic(self.tick, 3)
 
     def start(self):
@@ -26,7 +29,7 @@ class Game:
 
     def tick_handler(self, force=False):
         if not force:
-            if len(self.acquired_moves) == len(self.players) - self.ais: #temporary ai fix
+            if len(self.acquired_moves) == len(self.world_map.players) - self.ais: #temporary ai fix
                 self.tick()
         else:
             if not time() - self.last_tick > 3:
@@ -35,6 +38,7 @@ class Game:
         self.last_tick = time()
 
     def tick(self):
+        self.ticks += 1
         for bomb in list(self.world_map.bombs.values()):
             if bomb.tick() == BombEvent.EXPLODE:
                 self.world_map.explode_bomb(bomb)
@@ -63,20 +67,25 @@ class Game:
                     bombs_exploded = True
 
         for player in self.players.values():
-            if player.coord in all_fire_coords:
-                logging.info("Player {} is in fire".format(player.name, fire))
             player.tick()
             if player.coord in all_fire_coords and not player.invincible:
+                hp = player.hit()
+                logging.info("Player {} is hit. Current HP: {}".format(player.name, player.hp))
+                if not hp:
+                    self.kill_player(player)
 
         self.register_player_moves()
-        self.send_map_to_players()
-        self.acquired_moves = {}
+        if len(self.world_map.players) <= 1:
+            self.ended = True
+        else:
+            self.send_map_to_players()
+            self.acquired_moves = {}
 
     def register_player_moves(self):
-        for player_client, player in self.players.items():
-            direction, plant_bomb = self.acquired_moves[player_client]
+        for client, player in self.players.items():
 
             try:
+                direction, plant_bomb = self.acquired_moves[client]
                 # Movement
                 direction = utils.direction_as_movement_delta(direction)
                 dest_coord = player.coord + direction
@@ -96,9 +105,16 @@ class Game:
             except KeyError:
                 pass
 
-    def send_map_to_players(self):
-        for client in self.players:
-            client.manual_output("{}".format(self.world_map.to_ascii()))
+    def kill_player(self, player):
+        self.world_map.remove_player(player)
 
-    def get_player_move(self, player, move):
-        self.acquired_moves[player] = move
+    def send_map_to_players(self):
+        for client, player in self.players.items():
+            if player in self.world_map.players:
+                client.manual_output("{}".format(self.world_map.to_ascii()))
+
+        for client in self.players:
+
+    def get_player_move(self, client, move):
+        if self.players[client].hp:
+            self.acquired_moves[client] = move

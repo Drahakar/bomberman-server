@@ -38,7 +38,6 @@ class WorldMap:
         for player, spawn_point in zip(self.players, self.gen_spawn_points()):
             self.tiles[spawn_point].add(player)
             player.coord = spawn_point
-            player.alive = True
 
     def gen_spawn_points(self):
         possible_spawns = [
@@ -114,6 +113,9 @@ class WorldMap:
                 self.open_box(coord)
         self.fires.remove(fire)
 
+    def remove_player(self, player):
+        self.players.remove(player)
+        self.tiles[player.coord].remove(player)
 
     def open_box(self, coord):
         box = self.boxes[coord]

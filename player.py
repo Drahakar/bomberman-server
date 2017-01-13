@@ -10,14 +10,16 @@ class Player:
 
     def setup(self):
         self.coord = None
-        self.alive = True
+        self.hp = config.PLAYER_LIVES
         self.invincible = 0
         self.can_push_bombs = False
         self.num_bombs = config.INITIAL_BOMB_AMOUNT
         self.power = config.INITIAL_POWER
 
     def hit(self):
+        self.hp = max(0, self.hp - 1)
         self.invincible = config.INVINCIBLE_FRAMES
+        return self.hp
 
     def tick(self):
         self.invincible = max(0, self.invincible - 1)
