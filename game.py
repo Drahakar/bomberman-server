@@ -48,13 +48,11 @@ class Game:
                 if bomb.is_moving() and self.world_map.can_move_to(bomb.coord, bomb.move_direction):
                     self.world_map.move_bomb(bomb)
 
-        # Union all fire coordinates into a set
-        all_fire_coords = set()
         for fire in list(self.world_map.fires):
-            if fire.tick() != FireEvent.BURN_OUT:
-                all_fire_coords = all_fire_coords.union(fire.coords)
-            else:
+            if fire.tick() == FireEvent.BURN_OUT:
                 self.world_map.remove_fire(fire)
+
+        fire_coords = self.world_map.all_fire_coords()
 
         # Try to blow up all bombs, including spawning new fire for the blown up
         # bombs. Keep looping until no bomb has exploded within the loop.
@@ -62,15 +60,15 @@ class Game:
         while bombs_exploded:
             bombs_exploded = False
             for bomb in list(self.world_map.bombs.values()):
-                if bomb.coord in all_fire_coords:
+                if bomb.coord in fire_coords:
                     new_fire = self.world_map.explode_bomb(bomb)
                     new_fire.tick() # Tick new fire to match the triggering fire.
-                    all_fire_coords = all_fire_coords.union(new_fire.coords)
+                    fire_coords = fire_coords.union(new_fire.coords)
                     bombs_exploded = True
 
         for player in self.players.values():
             player.tick()
-            if player.coord in all_fire_coords and not player.invincible:
+            if player.coord in fire_coords and not player.invincible:
                 hp = player.hit()
                 logging.info("Player {} is hit. Current HP: {}".format(player.name, player.hp))
                 if not hp:
@@ -137,7 +135,11 @@ class Game:
     def send_map_to_players(self):
         for client, player in self.players.items():
             if player in self.world_map.players:
-                client.manual_output("{}".format(self.world_map.to_ascii()))
+                client.manual_output("{}\n{}".format(
+                    self.world_map.to_json(),
+                    self.world_map.to_ascii()
+                ))
+
 
     def send_result_to_players(self):
         outp = {'event' : 'game_end'}

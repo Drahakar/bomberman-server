@@ -51,11 +51,16 @@ class WorldMap:
         return possible_spawns
 
     def gen_initial_entities(self):
+        self.walls = set()
         wall_coords = set()
         for x in range(1, self.width, 2):
             for y in range(1, self.height, 2):
-                wall_coords.add(Coordinate(x,y))
-                self.tiles[Coordinate(x,y)].content.add(Wall())
+                new_coord = Coordinate(x,y)
+                new_wall = Wall(new_coord)
+
+                wall_coords.add(new_coord)
+                self.tiles[new_coord].content.add(new_wall)
+                self.walls.add(new_wall)
         self.gen_boxes(wall_coords)
 
     def gen_boxes(self, skip):
@@ -101,7 +106,8 @@ class WorldMap:
 
     def add_new_bomb(self, player):
         player.num_bombs -= 1
-        bomb = Bomb(player)
+        bomb_id = 0 if not self.bombs else max(bomb.id for bomb in self.bombs.values()) + 1
+        bomb = Bomb(bomb_id, player)
         self.tiles[player.coord].add(bomb)
         self.bombs[player.coord] = bomb
 
@@ -162,6 +168,13 @@ class WorldMap:
                     break
         return fire_coords
 
+    def all_fire_coords(self):
+        """Union all fire coordinates together and return a new set with all those"""
+        if self.fires:
+            return set.union(*[fire.coords for fire in self.fires])
+        else:
+            return set()
+
     def to_ascii(self):
         asc_map = [[" " for x in range(self.width)] for y in range(self.height)] 
         for x in range(self.width):
@@ -175,6 +188,18 @@ class WorldMap:
         asc_map.insert(0, ["-"] * (self.width + 2))
         asc_map.append(["-"] * (self.width + 2))
         return '\n'.join([''.join(row) for row in asc_map])
+
+    def to_json(self):
+        ret = {}
+        jsonfunc = lambda x: x.to_json()
+        ret["width"]    = self.width
+        ret["height"]   = self.height
+        ret["walls"]    = list(map(jsonfunc, self.walls))
+        ret["players"]  = list(map(jsonfunc, self.players))
+        ret["bombs"]    = list(map(jsonfunc, self.bombs))
+        ret["boxes"]    = list(map(jsonfunc, self.boxes))
+        ret["powerups"] = list(map(jsonfunc, self.powerups))
+        ret["fires"]    = list(map(jsonfunc, self.all_fire_coords()))
             
     def pos_to_coord(self, pos):
         y = pos // self.width

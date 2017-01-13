@@ -111,7 +111,10 @@ class Server:
         for client in self.registered_clients:
             self.client_to_game[client] = game
         for client in self.registered_clients:
-            client.manual_output("{}".format(game.world_map.to_ascii()))
+            client.manual_output("{}\n{}".format(
+                game.world_map.to_json(),
+                game.world_map.to_ascii()
+            ))
 
     def end_game(self, game):
         for client in list(game.players):

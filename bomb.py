@@ -6,7 +6,8 @@ from bomb_event import BombEvent
 from fire import Fire
 
 class Bomb:
-    def __init__(self, player, life=config.BOMB_TIMER):
+    def __init__(self, bomb_id, player, life=config.BOMB_TIMER):
+        self.id = bomb_id
         self.owner = player
         self.coord = player.coord
         self.life = life
@@ -26,6 +27,9 @@ class Bomb:
         self.life -= 1
         if not self.life:
             return BombEvent.EXPLODE
+
+    def to_json(self):
+        return self.coord.to_json()
 
     def ascii(self):
         return "b"

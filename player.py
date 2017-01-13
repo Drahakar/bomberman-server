@@ -1,6 +1,7 @@
 from uuid import uuid4
 from bomb import Bomb
 import config
+import json
 
 class Player:
     def __init__(self, name):
@@ -26,6 +27,14 @@ class Player:
 
     def ascii(self):
         return "p"
+
+    def to_json(self):
+        ret = {}
+        ret['name'] = self.name
+        ret['id'] = self.p_id
+        ret['invincible'] = self.invincible
+        ret['coord'] = self.coord.to_json()
+        return json.dumps(ret)
 
     def __str__(self):
         return "Name: {}, id: {}".format(self.name, self.p_id)

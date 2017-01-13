@@ -1,5 +1,6 @@
 from coordinate import Coordinate
 import config
+import json
 
 class Box:
 
@@ -10,6 +11,9 @@ class Box:
     def tick(self):
         self.time_until_removal -= 1
         return self.time_until_removal
+
+    def to_json(self):
+        return self.coord.to_json()
 
     def ascii(self):
         return "X"

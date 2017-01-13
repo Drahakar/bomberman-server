@@ -1,8 +1,13 @@
+import json
+
 class Coordinate:
     def __init__(self, x, y):
         self.x = x
         self.y = y
             
+    def to_json(self):
+        return json.dumps({'x' : self.x, 'y' : self.y})
+
     def __add__(self, tup):
         x, y = tup
         return Coordinate(self.x + x, self.y + y)
