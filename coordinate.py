@@ -5,8 +5,8 @@ class Coordinate:
         self.x = x
         self.y = y
             
-    def to_json(self):
-        return json.dumps({'x' : self.x, 'y' : self.y})
+    def json_compatible(self):
+        return {'x' : self.x, 'y' : self.y}
 
     def __add__(self, tup):
         x, y = tup

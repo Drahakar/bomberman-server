@@ -191,7 +191,7 @@ class WorldMap:
 
     def to_json(self):
         ret = {}
-        jsonfunc = lambda x: x.to_json()
+        jsonfunc = lambda x: x.json_compatible()
         ret["width"]    = self.width
         ret["height"]   = self.height
         ret["walls"]    = list(map(jsonfunc, self.walls))
@@ -200,6 +200,7 @@ class WorldMap:
         ret["boxes"]    = list(map(jsonfunc, self.boxes))
         ret["powerups"] = list(map(jsonfunc, self.powerups))
         ret["fires"]    = list(map(jsonfunc, self.all_fire_coords()))
+        return json.dumps(ret, indent=True)
             
     def pos_to_coord(self, pos):
         y = pos // self.width

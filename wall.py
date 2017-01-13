@@ -7,5 +7,5 @@ class Wall:
     def ascii(self):
         return "|"
 
-    def to_json(self):
-        return self.coord.to_json()
+    def json_compatible(self):
+        return self.coord.json_compatible()

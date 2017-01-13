@@ -28,8 +28,8 @@ class Bomb:
         if not self.life:
             return BombEvent.EXPLODE
 
-    def to_json(self):
-        return self.coord.to_json()
+    def json_compatible(self):
+        return self.coord.json_compatible()
 
     def ascii(self):
         return "b"
