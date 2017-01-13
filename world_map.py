@@ -194,6 +194,6 @@ class WorldMap:
             return (Wall,)
 
     def can_move_to(self, coord, direction=Direction.STAY):
-        valid_tiles = (Player, Powerup)
+        valid_tiles = (Player, Powerup, Fire)
         target_tile = self.get_tile_at(coord + direction)
         return not target_tile or any(isinstance(c, valid_tiles) for c in target_tile)
