@@ -11,9 +11,16 @@ class Player:
     def setup(self):
         self.coord = None
         self.alive = True
+        self.invincible = 0
         self.can_push_bombs = False
         self.num_bombs = config.INITIAL_BOMB_AMOUNT
         self.power = config.INITIAL_POWER
+
+    def hit(self):
+        self.invincible = config.INVINCIBLE_FRAMES
+
+    def tick(self):
+        self.invincible = max(0, self.invincible - 1)
 
     def ascii(self):
         return "p"

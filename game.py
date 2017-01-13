@@ -65,6 +65,8 @@ class Game:
         for player in self.players.values():
             if player.coord in all_fire_coords:
                 logging.info("Player {} is in fire".format(player.name, fire))
+            player.tick()
+            if player.coord in all_fire_coords and not player.invincible:
 
         self.register_player_moves()
         self.send_map_to_players()
