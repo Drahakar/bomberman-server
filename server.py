@@ -1,3 +1,4 @@
+from database import Database
 import logging
 import traceback
 from player import Player
@@ -16,12 +17,12 @@ class Server:
         self.clients = set()
         self.registered_clients = {}
         self.client_to_game = {}
-        self.games = set()
         logging.basicConfig(format="%(asctime)s %(levelname)s  %(message)s", level=loglevel)
         self.types = {
             "register" : self.register_player,
             "start_game" : self.start_game,
             "move" : self.register_move,
+            "old_game" : self.get_old_game,
         }
 
     def start(self):
@@ -105,7 +106,7 @@ class Server:
         if current_game.ended:
             self.end_game(current_game)
 
-    def start_game(self):
+    def start_game(self, message, start_client):
         game = Game(self.registered_clients, 0)
         logging.info("Starting game")
         for client in self.registered_clients:
@@ -120,7 +121,18 @@ class Server:
         for client in list(game.players):
             del(self.registered_clients[client])
             del(self.client_to_game[client])
-        # TODO: Save game
+        Database.insert_game_states(json.dumps(game.states))
+
+    def get_old_game(self, message, client):
+        try:
+            game = Database.get_game(message['id'])
+        except KeyError:
+            return self.send_reply(client, "error", "'id'-parameter is missing")
+
+        if game:
+            self.send_reply(client, "info", game)
+        else:
+            self.send_reply(client, "error", "Game id doesn't exist")
 
     def send_reply(self, client, event, text):
         client.manual_output(json.dumps({'event' : event, 'text' : text}))

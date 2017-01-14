@@ -175,6 +175,22 @@ class WorldMap:
         else:
             return set()
 
+    def json_compatible(self):
+        ret = {}
+        jsonfunc = lambda x: x.json_compatible()
+        ret["width"]    = self.width
+        ret["height"]   = self.height
+        ret["walls"]    = list(map(jsonfunc, self.walls))
+        ret["players"]  = list(map(jsonfunc, self.players))
+        ret["bombs"]    = list(map(jsonfunc, self.bombs))
+        ret["boxes"]    = list(map(jsonfunc, self.boxes))
+        ret["powerups"] = list(map(jsonfunc, self.powerups))
+        ret["fires"]    = list(map(jsonfunc, self.all_fire_coords()))
+        return ret
+
+    def to_json(self):
+        return json.dumps(self.json_compatible())
+
     def to_ascii(self):
         asc_map = [[" " for x in range(self.width)] for y in range(self.height)] 
         for x in range(self.width):
@@ -189,18 +205,6 @@ class WorldMap:
         asc_map.append(["-"] * (self.width + 2))
         return '\n'.join([''.join(row) for row in asc_map])
 
-    def to_json(self):
-        ret = {}
-        jsonfunc = lambda x: x.json_compatible()
-        ret["width"]    = self.width
-        ret["height"]   = self.height
-        ret["walls"]    = list(map(jsonfunc, self.walls))
-        ret["players"]  = list(map(jsonfunc, self.players))
-        ret["bombs"]    = list(map(jsonfunc, self.bombs))
-        ret["boxes"]    = list(map(jsonfunc, self.boxes))
-        ret["powerups"] = list(map(jsonfunc, self.powerups))
-        ret["fires"]    = list(map(jsonfunc, self.all_fire_coords()))
-        return json.dumps(ret, indent=True)
             
     def pos_to_coord(self, pos):
         y = pos // self.width

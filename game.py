@@ -21,6 +21,7 @@ class Game:
         self.acquired_moves = {}
         self.last_tick = None
         self.ticks = 0
+        self.states = {}
         self.ended = False
         self.dead_players = []
         self.ticker = Periodic(self.tick, 3)
@@ -40,6 +41,7 @@ class Game:
         self.last_tick = time()
 
     def tick(self):
+        self.states[self.ticks] = self.world_map.json_compatible()
         self.ticks += 1
         for bomb in list(self.world_map.bombs.values()):
             if bomb.tick() == BombEvent.EXPLODE:
