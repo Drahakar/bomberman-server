@@ -96,7 +96,7 @@ class Server:
         current_game = self.client_to_game[client]
         try:
             if current_player in current_game.world_map.players:
-                current_game.get_player_move(client, (message["direction"], message["plant_bomb"]))
+                current_game.get_player_move(client, (message["direction"], message.get("plant_bomb", False)))
             else:
                 return self.send_reply(client, "game_over", "You are dead, you have to wait for the game to finish.")
 
