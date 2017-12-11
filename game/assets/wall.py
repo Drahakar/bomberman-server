@@ -1,5 +1,6 @@
 import json
 
+
 class Wall:
     def __init__(self, coord=None):
         self.coord = coord

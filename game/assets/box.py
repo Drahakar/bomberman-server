@@ -1,6 +1,8 @@
-from coordinate import Coordinate
-import config
+from game import config
+from utils import Coordinate
+
 import json
+
 
 class Box:
 

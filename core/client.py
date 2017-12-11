@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
+from json import dumps
+from threading import Thread
 from websocket import create_connection
 import sys
-from threading import Thread
-from json import dumps
 
 
 def receive():
@@ -14,7 +14,7 @@ def receive():
         except:
             pass
 
-ws = create_connection('ws://localhost:1234/training')
+ws = create_connection('ws://localhost:8080/training')
 
 receiver = Thread(target=receive)
 receiver.setDaemon(True)

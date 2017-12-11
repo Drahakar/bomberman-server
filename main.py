@@ -1,8 +1,10 @@
+from core import Server
+
 import asyncio
 import websockets
 import argparse
 import logging
-from server import Server
+
 
 def main():
     parser = argparse.ArgumentParser(description="Bomberman websocket server")

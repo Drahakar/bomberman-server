@@ -1,14 +1,15 @@
-from database import Database
-import logging
-import traceback
-from player import Player
+from core import Database
 from game import Game
-import asyncio
-import websockets
-import json
-import uuid
+from game.assets import Player
+
 from time import time
 from websockets.exceptions import ConnectionClosed
+import asyncio
+import json
+import logging
+import traceback
+import websockets
+
 
 class Server:
     def __init__(self, loglevel, listen_host, listen_port):
@@ -74,7 +75,7 @@ class Server:
         return response_time > 3 and websocket in self.client_to_game
 
     def message_handler(self, message, client):
-        try: 
+        try:
             message = json.loads(message)
             return self.types[message["type"]](message, client)
         except (ValueError, KeyError) as e:

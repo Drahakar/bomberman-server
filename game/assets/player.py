@@ -1,7 +1,8 @@
+from game import config
+
 from uuid import uuid4
-from bomb import Bomb
-import config
 import json
+
 
 class Player:
     def __init__(self, name):

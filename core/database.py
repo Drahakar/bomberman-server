@@ -1,5 +1,6 @@
-import sqlite3
 import json
+import sqlite3
+
 
 class Database:
     # Use static variables for connection and cursor to only have one constant connection to the database.

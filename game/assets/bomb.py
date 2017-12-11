@@ -1,9 +1,13 @@
-import config
+from game import config
+from utils import Direction
 import utils
+
 import logging
-from directions import Direction
-from bomb_event import BombEvent
-from fire import Fire
+
+
+class BombEvent:
+    EXPLODE = 0
+
 
 class Bomb:
     def __init__(self, bomb_id, player, life=config.BOMB_TIMER):
@@ -33,3 +37,5 @@ class Bomb:
 
     def ascii(self):
         return "b"
+
+

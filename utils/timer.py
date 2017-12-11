@@ -1,5 +1,6 @@
-import asyncio
 from contextlib import suppress
+import asyncio
+
 
 class Periodic:
     def __init__(self, func, time):

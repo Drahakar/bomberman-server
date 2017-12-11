@@ -1,5 +1,9 @@
-import config
-from fire_event import FireEvent
+from game import config
+
+
+class FireEvent:
+    BURN_OUT, BURNING = range(2)
+
 
 class Fire:
     def __init__(self, owner, coords, duration=config.FIRE_DURATION):

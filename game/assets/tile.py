@@ -1,4 +1,6 @@
-from powerups import Powerup
+from game.assets.powerups import Powerup
+
+
 class Tile:
     def __init__(self, content=None):
         self.content = set()

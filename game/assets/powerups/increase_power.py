@@ -1,8 +1,10 @@
 from .powerup import Powerup
 
-class PushBomb(Powerup):
+
+class IncreasePower(Powerup):
     def __init__(self, coord):
         super().__init__(coord)
 
     def use(self, player):
-        player.can_push_bombs = True
+        player.power += 1
+

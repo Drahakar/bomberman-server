@@ -1,17 +1,12 @@
-from bomb import Bomb
-from box import Box
-from coordinate import Coordinate
-from directions import Direction
-from fire import Fire
-from player import Player
-from powerups import Powerup
+from game import config
+from game.assets import *
+from game.assets.powerups import Powerup
+from utils import Coordinate, Direction
+
 from random import sample, shuffle, choice
-from tile import Tile
-from wall import Wall
-import config
 import json
 import logging
-import powerups
+
 
 class WorldMap:
     def __init__(self, width, height, players):
@@ -192,7 +187,7 @@ class WorldMap:
         return json.dumps(self.json_compatible())
 
     def to_ascii(self):
-        asc_map = [[" " for x in range(self.width)] for y in range(self.height)] 
+        asc_map = [[" " for x in range(self.width)] for y in range(self.height)]
         for x in range(self.width):
             for y in range(self.height):
                 for c in self.tiles[Coordinate(x,y)].content:
@@ -205,7 +200,6 @@ class WorldMap:
         asc_map.append(["-"] * (self.width + 2))
         return '\n'.join([''.join(row) for row in asc_map])
 
-            
     def pos_to_coord(self, pos):
         y = pos // self.width
         x = pos % self.width

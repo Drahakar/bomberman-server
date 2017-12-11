@@ -1,10 +1,11 @@
 import json
 
+
 class Coordinate:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-            
+
     def json_compatible(self):
         return {'x' : self.x, 'y' : self.y}
 

@@ -1,17 +1,13 @@
-from bomb import Bomb
-from fire_event import FireEvent
-from bomb_event import BombEvent
+from .world_map import WorldMap
+from game.assets import Bomb, FireEvent, BombEvent, Player
+from game.assets.powerups import Powerup
+from utils import Periodic, Direction
+
 from itertools import groupby
-from player import Player
-from powerups import Powerup
-from random import choice
 from time import time
-from timer import Periodic
-from world_map import WorldMap
 import json
 import logging
-import utils
-import powerups
+
 
 class Game:
     def __init__(self, players, ais, width=11, height=11):
@@ -90,7 +86,7 @@ class Game:
             try:
                 direction, plant_bomb = self.acquired_moves[client]
                 # Movement
-                direction = utils.direction_as_movement_delta(direction)
+                direction = Direction.as_movement_delta(direction)
                 dest_coord = player.coord + direction
                 target_tile = self.world_map.get_classes_at(dest_coord)
 

@@ -1,9 +1,10 @@
 from .powerup import Powerup
 
-class IncreasePower(Powerup):
+
+class ExtraBomb(Powerup):
     def __init__(self, coord):
         super().__init__(coord)
 
     def use(self, player):
-        player.power += 1
+        player.num_bombs += 1
 
