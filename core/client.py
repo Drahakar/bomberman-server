@@ -3,7 +3,12 @@
 from json import dumps
 from threading import Thread
 from websocket import create_connection
-import sys
+
+QUIT_COMMAND = "quit"
+REGISTER_COMMAND = "reg"
+START_COMMAND = "start"
+CONNECT_COMMAND = "con"
+MOVE_COMMAND = "m"
 
 
 def receive():
@@ -14,6 +19,7 @@ def receive():
         except:
             pass
 
+
 ws = create_connection('ws://localhost:8080/training')
 
 receiver = Thread(target=receive)
@@ -22,14 +28,18 @@ receiver.start()
 
 while True:
     name = input("> ")
-    if name == "quit" or name == "exit":
+    if name == QUIT_COMMAND:
         break
-    if name == "reg":
-        ws.send('{"type" : "register", "name" : "legget"} ')
-    elif name == "start":
-        ws.send('{"type" : "start_game", "name" : "legget"}')
-    elif name == "con":
+    if name.startswith(REGISTER_COMMAND):
+        to_send = {'type': 'register', 'name': name[len(REGISTER_COMMAND):]}
+        ws.send(dumps(to_send))
+    elif name.startswith(START_COMMAND):
+        to_send = {'type': 'start_game', 'name': name[len(START_COMMAND):]}
+        ws.send(dumps(to_send))
+    elif name == CONNECT_COMMAND:
         ws = create_connection('ws://localhost:1234/training')
-    elif name.startswith("m"):
-        to_send = {'type' : 'move', 'direction' : name[1:], 'plant_bomb' : False}
+    elif name.startswith(MOVE_COMMAND):
+        args = name.split(" ")
+        bomb = len(args) > 2
+        to_send = {'type': 'move', 'direction': args[1], 'plant_bomb': bomb}
         ws.send(dumps(to_send))
