@@ -25,11 +25,11 @@ while True:
     if name == "quit" or name == "exit":
         break
     if name == "reg":
-        ws.send('{"command" : "register", "name" : "legget"} ')
+        ws.send('{"type" : "register", "name" : "legget"} ')
     elif name == "start":
-        ws.send('{"command" : "start_game", "name" : "legget"}')
+        ws.send('{"type" : "start_game", "name" : "legget"}')
     elif name == "con":
         ws = create_connection('ws://localhost:1234/training')
     elif name.startswith("m"):
-        to_send = {'command' : 'move', 'direction' : name[1:], 'plant_bomb' : False}
+        to_send = {'type' : 'move', 'direction' : name[1:], 'plant_bomb' : False}
         ws.send(dumps(to_send))
